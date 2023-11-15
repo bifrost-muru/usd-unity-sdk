@@ -17,6 +17,11 @@ using System.Linq;
 using UnityEngine;
 using UnityEditor;
 using USD.NET;
+using System.Text.RegularExpressions;
+using UnityEngine.Splines;
+using NUnit.Framework;
+using System.Collections.Generic;
+using Unity.Mathematics;
 
 namespace Unity.Formats.USD
 {
@@ -201,6 +206,86 @@ namespace Unity.Formats.USD
             }
 
             ImportHelpers.ImportAsTimelineClip(scene, null);
+        }
+
+        [MenuItem("USD/Import spline", priority = 3)]
+        public static void MenuImportSpline()
+        {
+            string splinePath = ImportHelpers.SelectAsciiUsdFile();
+            if (splinePath == null)
+            {
+                return;
+            }
+
+            List<int> vertexArray = new List<int>();
+            List<float3> splinePoints = new List<float3>();
+
+            GameObject splineGO = new GameObject("Spline");
+            SplineContainer splineContainer = splineGO.AddComponent<SplineContainer>();
+
+            using (StreamReader reader = new StreamReader(splinePath))
+            {
+                while (!reader.EndOfStream)
+                {
+                    string line = reader.ReadLine();
+
+                    if (line.Contains("int[] curveVertexCounts"))
+                    {
+                        string pattern = @"\d+";
+                        MatchCollection matches = Regex.Matches(line, pattern);
+
+                        foreach (Match match in matches)
+                        {
+                            if (match.Groups.Count == 1)
+                            {
+                                int count = int.Parse(match.Groups[0].Value);
+                                vertexArray.Add(count);
+                                Debug.Log($"Found Vertex: ({count})");
+                            }
+                        }
+                    }
+
+                    if (line.Contains("point3f[] points"))
+                    {
+                        //string pattern = @"\((-?\d+\.\d+), (-?\d+\.\d+), (-?\d+\.\d+)\)";
+                        string pattern = @"\((-?\d+(\.\d+)?), (-?\d+(\.\d+)?), (-?\d+(\.\d+)?)\)";
+                        MatchCollection matches = Regex.Matches(line, pattern);
+
+                        foreach (Match match in matches)
+                        {
+                            if (match.Groups.Count == 7)
+                            {
+                                float x = float.Parse(match.Groups[1].Value);
+                                float y = float.Parse(match.Groups[3].Value);
+                                float z = float.Parse(match.Groups[5].Value);
+
+                                splinePoints.Add(new float3(x, y, -z));
+
+                                Debug.Log($"Found numbers: ({x}, {y}, {-z})");
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            int currSplinePtsIdx = 0;
+            for (int i = 0; i < vertexArray.Count; ++i)
+            {
+                Spline spline = splineContainer.AddSpline();
+                for (int j = 0; j < vertexArray[i]; ++j)
+                {
+                    int curridx = currSplinePtsIdx + j;
+                    if (curridx >= splinePoints.Count)
+                    {
+                        Debug.LogError($"Spine index is out of bounds {currSplinePtsIdx + j}");
+                        return;
+                    }
+                    float3 point = splinePoints[curridx];
+                    spline.Add(new BezierKnot(point), TangentMode.Linear, 0.5f);
+                }
+                currSplinePtsIdx += vertexArray[i];
+            }
         }
 
         [MenuItem("USD/Unload Payload Subtree", true)]

@@ -1,10 +1,14 @@
 {
     "name": "Unity.Formats.USD.Editor",
+    "rootNamespace": "",
     "references": [
         "Unity.Formats.USD.Runtime",
         "Unity.Recorder.Editor",
         "USD.NET",
-        "Unity.Formats.USD.Common"
+        "Unity.Formats.USD.Common",
+        "Unity.Splines",
+        "Unity.Splines.Editor",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [
         "Editor"

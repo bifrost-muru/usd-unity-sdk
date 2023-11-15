@@ -166,27 +166,93 @@ namespace Unity.Formats.USD
             if (!pipeline)
             {
                 var matAdapter = new StandardShaderImporter(mat);
-                matAdapter.ImportParametersFromUsd(scene, materialPath, sample, previewSurf, options);
+                matAdapter.ImportParametersFromUsd(scene, materialPath, previewSurf, options);
                 matAdapter.ImportFromUsd();
             }
             else if (pipeline.GetType().Name == "HDRenderPipelineAsset")
             {
                 // Robustness: Comparing a strng ^ here is not great, but there is no other option.
                 var matAdapter = new HdrpShaderImporter(mat);
-                matAdapter.ImportParametersFromUsd(scene, materialPath, sample, previewSurf, options);
+                matAdapter.ImportParametersFromUsd(scene, materialPath, previewSurf, options);
                 matAdapter.ImportFromUsd();
             }
             else if (pipeline.GetType().Name == "UniversalRenderPipelineAsset")
             {
                 var matAdapter = new UrpShaderImporter(mat);
-                matAdapter.ImportParametersFromUsd(scene, materialPath, sample, previewSurf, options);
+                matAdapter.ImportParametersFromUsd(scene, materialPath, previewSurf, options);
                 matAdapter.ImportFromUsd();
             }
             else
             {
                 // Fallback to the Standard importer, which may pickup some attributes by luck.
                 var matAdapter = new StandardShaderImporter(mat);
-                matAdapter.ImportParametersFromUsd(scene, materialPath, sample, previewSurf, options);
+                matAdapter.ImportParametersFromUsd(scene, materialPath, previewSurf, options);
+                matAdapter.ImportFromUsd();
+            }
+
+            // Get the material name from the path
+            if (mat != null && !string.IsNullOrEmpty(materialPath))
+            {
+                mat.name = new pxr.SdfPath(materialPath).GetName();
+            }
+
+            return mat;
+        }
+
+        /// <summary>
+        /// Builds a Unity Material from the given USD material sample.
+        /// </summary>
+        public static Material BuildMtlxMaterial(Scene scene,
+            string materialPath,
+            MtlxMaterialSample sample,
+            SceneImportOptions options)
+        {
+            if (string.IsNullOrEmpty(sample.surface.connectedPath))
+            {
+                return null;
+            }
+
+            MtlxSurfaceSample mtlxSurf = new MtlxSurfaceSample();
+            scene.Read(new pxr.SdfPath(sample.surface.connectedPath).GetPrimPath(), mtlxSurf);
+
+            if (string.IsNullOrEmpty(mtlxSurf.base_color.connectedPath))
+            {
+                return null;
+            }
+            scene.Read(new pxr.SdfPath(mtlxSurf.base_color.connectedPath).GetPrimPath(), mtlxSurf.hmtlxcolorcorrect1);
+
+            if (string.IsNullOrEmpty(mtlxSurf.hmtlxcolorcorrect1.In.connectedPath))
+            {
+                return null;
+            }
+
+            Material mat = Material.Instantiate(options.materialMap.MetallicWorkflowMaterial);
+
+            var pipeline = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset;
+            if (!pipeline)
+            {
+                var matAdapter = new StandardShaderImporter(mat);
+                matAdapter.ImportMtlxParametersFromUsd(scene, materialPath, mtlxSurf, options);
+                matAdapter.ImportFromUsd();
+            }
+            else if (pipeline.GetType().Name == "HDRenderPipelineAsset")
+            {
+                // Robustness: Comparing a strng ^ here is not great, but there is no other option.
+                var matAdapter = new HdrpShaderImporter(mat);
+                matAdapter.ImportMtlxParametersFromUsd(scene, materialPath, mtlxSurf, options);
+                matAdapter.ImportFromUsd();
+            }
+            else if (pipeline.GetType().Name == "UniversalRenderPipelineAsset")
+            {
+                var matAdapter = new UrpShaderImporter(mat);
+                matAdapter.ImportMtlxParametersFromUsd(scene, materialPath, mtlxSurf, options);
+                matAdapter.ImportFromUsd();
+            }
+            else
+            {
+                // Fallback to the Standard importer, which may pickup some attributes by luck.
+                var matAdapter = new StandardShaderImporter(mat);
+                matAdapter.ImportMtlxParametersFromUsd(scene, materialPath, mtlxSurf, options);
                 matAdapter.ImportFromUsd();
             }
 

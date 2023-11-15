@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#define ENABLE_LOGS
 
 using System.Collections;
 using System.Collections.Generic;
@@ -25,6 +26,7 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 using UnityEditor;
 using System.IO;
 #endif
+
 
 namespace Unity.Formats.USD
 {
@@ -530,30 +532,63 @@ namespace Unity.Formats.USD
             Profiler.BeginSample("USD: Build Materials");
             if (importOptions.ShouldBindMaterials)
             {
-                foreach (var pathAndSample in scene.ReadAll<MaterialSample>(primMap.Materials))
                 {
-                    try
+                    SampleCollection<MaterialSample> MaterialSamples = scene.ReadAll<MaterialSample>(primMap.Materials);
+                    foreach (var pathAndSample in MaterialSamples)
                     {
-                        var mat = MaterialImporter.BuildMaterial(scene,
-                            pathAndSample.path,
-                            pathAndSample.sample,
-                            importOptions);
-                        if (mat != null)
+                        try
                         {
-                            importOptions.materialMap[pathAndSample.path] = mat;
+                            var mat = MaterialImporter.BuildMaterial(scene,
+                                pathAndSample.path,
+                                pathAndSample.sample,
+                                importOptions);
+                            if (mat != null)
+                            {
+                                importOptions.materialMap[pathAndSample.path] = mat;
+                            }
+                        }
+                        catch (System.Exception ex)
+                        {
+                            Debug.LogException(
+                                new ImportException("Error processing material <" + pathAndSample.path + ">", ex));
+                            primMap.HasErrors = true;
+                        }
+
+                        if (ShouldYield(targetTime, timer))
+                        {
+                            yield return null;
+                            ResetTimer(timer);
                         }
                     }
-                    catch (System.Exception ex)
-                    {
-                        Debug.LogException(
-                            new ImportException("Error processing material <" + pathAndSample.path + ">", ex));
-                        primMap.HasErrors = true;
-                    }
+                }
 
-                    if (ShouldYield(targetTime, timer))
+                {
+                    SampleCollection<MtlxMaterialSample> MaterialSamples = scene.ReadAll<MtlxMaterialSample>(primMap.Materials);
+                    foreach (var pathAndSample in MaterialSamples)
                     {
-                        yield return null;
-                        ResetTimer(timer);
+                        try
+                        {
+                            var mat = MaterialImporter.BuildMtlxMaterial(scene,
+                                pathAndSample.path,
+                                pathAndSample.sample,
+                                importOptions);
+                            if (mat != null)
+                            {
+                                importOptions.materialMap[pathAndSample.path] = mat;
+                            }
+                        }
+                        catch (System.Exception ex)
+                        {
+                            Debug.LogException(
+                                new ImportException("Error processing material <" + pathAndSample.path + ">", ex));
+                            primMap.HasErrors = true;
+                        }
+
+                        if (ShouldYield(targetTime, timer))
+                        {
+                            yield return null;
+                            ResetTimer(timer);
+                        }
                     }
                 }
             }
