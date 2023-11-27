@@ -122,7 +122,6 @@ namespace Unity.Formats.USD
 
         public virtual void ImportParametersFromUsd(Scene scene,
             string materialPath,
-            MaterialSample materialSample,
             PreviewSurfaceSample previewSurf,
             SceneImportOptions options)
         {
@@ -177,6 +176,21 @@ namespace Unity.Formats.USD
                     out uvPrimvar);
                 MergePrimvars(uvPrimvar, primvars);
             }
+
+            options.materialMap.SetPrimvars(materialPath, primvars);
+        }
+
+        public virtual void ImportMtlxParametersFromUsd(Scene scene,
+           string materialPath,
+           MtlxSurfaceSample mtlxSurf,
+           SceneImportOptions options)
+        {
+            var primvars = new List<string>();
+            string uvPrimvar = null;
+
+            ImportColorOrMap(scene, mtlxSurf.hmtlxcolorcorrect1.In, false, options, ref DiffuseMap, ref Diffuse,
+                out uvPrimvar);
+            MergePrimvars(uvPrimvar, primvars);
 
             options.materialMap.SetPrimvars(materialPath, primvars);
         }

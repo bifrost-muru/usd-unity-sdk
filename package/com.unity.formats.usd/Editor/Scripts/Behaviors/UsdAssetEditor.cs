@@ -15,6 +15,10 @@
 using System.IO;
 using UnityEngine;
 using UnityEditor;
+using System.Collections.Generic;
+using System;
+using USD.NET;
+using pxr;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
 #else
@@ -35,6 +39,14 @@ namespace Unity.Formats.USD
         private Texture2D m_trashButton;
         private Texture2D m_reimportButton;
         private Texture2D m_detachButton;
+
+        private string pathToSaveImages = string.Empty;
+        private int m_screenWidth = 1920;
+        private int m_screenHeight = 1080;
+
+        private string m_MaterialStorePath = "BifrostMaterialOverrides";
+        public Shader m_MaterialBaseShader;
+        private bool m_OverwriteExistingMaterials = false;
 
         private enum LinearUnits
         {
@@ -101,6 +113,13 @@ namespace Unity.Formats.USD
                 Debug.LogWarning("No specular material set, reverting to default");
                 var matMap = new MaterialMap();
                 usdAsset.m_specularWorkflowMaterial = matMap.SpecularWorkflowMaterial;
+            }
+
+            if (usdAsset.m_mtlxBifrostMaterial == null)
+            {
+                Debug.LogWarning("No mtlx material set, reverting to default");
+                var matMap = new MaterialMap();
+                usdAsset.m_mtlxBifrostMaterial = matMap.MtlxXBifrostMaterial;
             }
 
             var buttonStyle = new GUIStyle(GUI.skin.button);
@@ -315,9 +334,268 @@ namespace Unity.Formats.USD
             usdAsset.m_importMeshes = EditorGUILayout.Toggle("Import Meshes", usdAsset.m_importMeshes);
             usdAsset.m_importSkinning = EditorGUILayout.Toggle("Import Skinning", usdAsset.m_importSkinning);
             usdAsset.m_importTransforms = EditorGUILayout.Toggle("Import Transforms", usdAsset.m_importTransforms);
+
+            GUILayout.Label("Remove Tools", EditorStyles.boldLabel);
+
+            if (GUILayout.Button("Remove Proxy"))
+            {
+                IterateChildrenAndDeleteMatchingNames(usdAsset.transform, "proxy");
+            }
+
+            if (GUILayout.Button("Remove Prototypes"))
+            {
+                IterateChildrenAndDeleteMatchingNames(usdAsset.transform, "Prototypes");
+            }
+
+            GUILayout.Label("Material tools", EditorStyles.boldLabel);
+
+            if (GUILayout.Button("Load UVs"))
+            {
+                LoadUVsOnAllChildren(usdAsset.transform, usdAsset.GetScene());
+            }
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PrefixLabel("Material Save Path");
+            m_MaterialStorePath = GUILayout.TextField(m_MaterialStorePath, 250, "textfield");
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PrefixLabel("Overwrite existing materials");
+            m_OverwriteExistingMaterials = EditorGUILayout.Toggle("", m_OverwriteExistingMaterials);
+
+            EditorGUILayout.EndHorizontal();
+
+            if (GUILayout.Button("Save Materials"))
+            {
+                string rootFolderPath = "Assets/" + m_MaterialStorePath;
+                if (!Directory.Exists(rootFolderPath))
+                {
+                    Directory.CreateDirectory(rootFolderPath);
+                }
+
+                CreateHierarchyAndMaterials(usdAsset.transform, rootFolderPath);
+                AssetDatabase.Refresh();
+            }
+
+            GUILayout.Label("Screenshot Tools", EditorStyles.boldLabel);
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PrefixLabel("Screenshot Height");
+            m_screenHeight = int.Parse(GUILayout.TextField(m_screenHeight.ToString(), 250, "textfield"));
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PrefixLabel("Screenshot Width");
+            m_screenWidth = int.Parse(GUILayout.TextField(m_screenWidth.ToString(), 250, "textfield"));
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PrefixLabel("Path");
+            pathToSaveImages = GUILayout.TextField(pathToSaveImages, 250, "textfield");
+            EditorGUILayout.EndHorizontal();
+
+            if (GUILayout.Button("Capture Camera shots") && IsPathValid(pathToSaveImages))
+            {
+                GameObject camerasGO = GameObject.Find("cameras");
+                Camera mainCamera = Camera.main;
+
+                if (camerasGO != null && Camera.main != null)
+                {
+                    Vector3 mainCameraOriginalPosition = mainCamera.transform.position;
+                    Quaternion mainCameraOriginalRotation = mainCamera.transform.rotation;
+
+                    for (int i = 0; i < camerasGO.transform.childCount; ++i)
+                    {
+                        mainCamera.transform.SetPositionAndRotation(
+                            camerasGO.transform.GetChild(i).position,
+                            camerasGO.transform.GetChild(i).rotation);
+                        CaptureScreenshot(mainCamera, Path.Combine(pathToSaveImages, i.ToString() + ".png"));
+                    }
+
+                    mainCamera.transform.SetPositionAndRotation(
+                            mainCameraOriginalPosition,
+                            mainCameraOriginalRotation);
+                }
+
+
+            }
+
             if (EditorGUI.EndChangeCheck())
                 EditorUtility.SetDirty(usdAsset);
         }
+        private void CreateHierarchyAndMaterials(Transform parent, string parentFolderPath)
+        {
+            foreach (Transform child in parent)
+            {
+                string childFolderPath = parentFolderPath + "/" + child.name;
+                Directory.CreateDirectory(childFolderPath);
+
+                MeshFilter meshFilter = child.GetComponent<MeshFilter>();
+                if (meshFilter != null)
+                {
+                    MeshRenderer meshRenderer = child.GetComponent<MeshRenderer>();
+
+                    if (meshRenderer != null)
+                    {
+                        Material[] materials = meshRenderer.sharedMaterials;
+
+                        foreach (Material material in materials)
+                        {
+                            string materialName = material.name + ".mat";
+                            string fullMaterialPath = childFolderPath + "/" + materialName;
+
+                            string materialPath = AssetDatabase.GetAssetPath(material);
+                            if(!string.IsNullOrEmpty(materialPath))
+                            {
+                                Debug.Log($"Material already saved at {materialPath}");
+                                continue;
+                            }
+
+                            if (AssetDatabase.LoadAssetAtPath<Material>(fullMaterialPath) != null)
+                            {
+                                if(m_OverwriteExistingMaterials)
+                                {
+                                    AssetDatabase.DeleteAsset(fullMaterialPath);
+                                }
+                                else
+                                {
+                                    Debug.Log($"Material exists at {fullMaterialPath} and override material is set to false.");
+                                    continue;
+                                }
+                            }
+
+
+                            AssetDatabase.CreateAsset(material, fullMaterialPath);
+                        }
+                    }
+                }
+
+                CreateHierarchyAndMaterials(child, childFolderPath);
+            }
+        }
+
+        static bool IsPathValid(string path)
+        {
+            try
+            {
+                Path.GetFullPath(path);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        void CaptureScreenshot(Camera camera, string path)
+        {
+            if (camera == null)
+            {
+                Debug.LogError("Camera not assigned!");
+                return;
+            }
+            m_screenWidth = 1920;
+            m_screenHeight = 1080;
+
+            RenderTexture renderTexture = new RenderTexture(m_screenWidth, m_screenHeight, 24);
+            camera.targetTexture = renderTexture;
+
+            Texture2D screenshot = new Texture2D(m_screenWidth, m_screenHeight, TextureFormat.RGB24, false);
+            camera.Render();
+            RenderTexture.active = renderTexture;
+            screenshot.ReadPixels(new Rect(0, 0, m_screenWidth, m_screenHeight), 0, 0);
+            screenshot.Apply();
+
+            camera.targetTexture = null;
+            RenderTexture.active = null;
+            DestroyImmediate(renderTexture);
+
+            byte[] bytes = screenshot.EncodeToPNG();
+            //string filePath = "Assets/Screenshots/screenshot.png"; // Adjust the file path as needed
+            System.IO.File.WriteAllBytes(path, bytes);
+
+            Debug.Log("Screenshot captured and saved to: " + path);
+        }
+
+        private void IterateChildrenAndDeleteMatchingNames(UnityEngine.Transform go, string name)
+        {
+            List<UnityEngine.Transform> childrenToDelete = new List<UnityEngine.Transform>();
+
+            GetAllChildTransformsWithMatchingName(go.transform, name, ref childrenToDelete);
+
+            for (int i = 0; i < childrenToDelete.Count; ++i)
+            {
+                DestroyImmediate(childrenToDelete[i].gameObject);
+            }
+        }
+
+        private void LoadUVsOnAllChildren(Transform transform, Scene scene)
+        {
+            for (int i = 0; i < transform.childCount; ++i)
+            {
+                Transform childTransform = transform.GetChild(i);
+                LoadUVsOnAllChildren(childTransform, scene);
+
+                UsdPrimSource primSource = childTransform.GetComponent<UsdPrimSource>();
+
+                if(!primSource)
+                {
+                    return;
+                }
+
+                string usdPrimpath = primSource.m_usdPrimPath;
+                UsdPrim prim = scene.GetPrimAtPath(usdPrimpath);
+                VtValue val = new VtValue();
+                TfToken attriname = new TfToken("primvars:st");
+
+                double usdTime = scene.Time.GetValueOrDefault();
+                MeshFilter meshFilter = childTransform.GetComponent<MeshFilter>();
+
+                if (meshFilter && prim.GetAttributeValue(attriname, val, usdTime))
+                {
+                    VtVec2fArray Vec2dArray = new VtVec2fArray(val.GetArraySize());
+
+                    if (val.CanCastToTypeOf(Vec2dArray))
+                    {
+                        UsdCs.VtValueToVtVec2fArray(val, Vec2dArray);
+                        uint size = Vec2dArray.size();
+                        Vector2[] uvs = new Vector2[size];
+
+                        for (int j = 0; j < size; ++j)
+                        {
+                            Vector2 vector2D = new Vector2(Vec2dArray[j][0], Vec2dArray[j][1]);
+                            uvs[j] = vector2D;
+                        }
+
+                        int verticesLength = meshFilter.sharedMesh.vertices.Length;
+                        int uvsLength = uvs.Length;
+;                       if (verticesLength == uvsLength)
+                        {
+                            meshFilter.sharedMesh.uv = uvs;
+                        }
+                        else
+                        {
+                            Debug.LogError("UV Length does not match vertices!");
+                        }
+                    }
+                };
+
+            }
+        }
+
+        private void GetAllChildTransformsWithMatchingName(UnityEngine.Transform go, string name, ref List<UnityEngine.Transform> children)
+        {
+            if (go.name == name)
+            {
+                children.Add(go);
+            }
+
+            for (int i = 0; i < go.childCount; ++i)
+            {
+                GetAllChildTransformsWithMatchingName(go.GetChild(i), name, ref children);
+            }
+        }
+
 
         private void ReloadFromUsd(UsdAsset stageRoot, bool forceRebuild)
         {

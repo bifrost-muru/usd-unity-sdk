@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.Serialization;
 using pxr;
 
 namespace USD.NET
@@ -153,8 +154,15 @@ namespace USD.NET
             {
                 return;
             }
+            string fieldname = field.Name;
 
-            if (!ReadAttr(field.Name,
+            DataMemberAttribute dataMemberAttribute = (DataMemberAttribute)Attribute.GetCustomAttribute(field, typeof(DataMemberAttribute));
+            if (dataMemberAttribute != null)
+            {
+                fieldname = dataMemberAttribute.Name;
+            }
+
+            if (!ReadAttr(fieldname,
                 field.FieldType,
                 ref fieldValue,
                 usdTime,

@@ -175,8 +175,21 @@ namespace Unity.Formats.USD
 
             InitUsd.Initialize();
             // var editingStage = new EditingStage(path);
-            var stage = pxr.UsdStage.Open(path, loadSet);
+            UsdStage stage = pxr.UsdStage.Open(path, loadSet);
             return Scene.Open(stage);
+        }
+
+        public static string SelectAsciiUsdFile(string path = "")
+        {
+#if UNITY_EDITOR
+            if (String.IsNullOrEmpty(path) && !UnityEngine.Application.isPlaying)
+                path = EditorUtility.OpenFilePanel("Import USD File", "", "usda");
+#endif
+
+            if (String.IsNullOrEmpty(path))
+                return null;
+
+            return path;
         }
 
         static pxr.SdfPath GetDefaultRoot(Scene scene)
@@ -240,7 +253,7 @@ namespace Unity.Formats.USD
             prefabPath = AssetDatabase.GenerateUniqueAssetPath(prefabPath);
             return prefabPath;
         }
-
+        
 #endif
     }
 }

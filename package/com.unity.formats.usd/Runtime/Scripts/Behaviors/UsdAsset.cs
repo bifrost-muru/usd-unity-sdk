@@ -106,6 +106,9 @@ namespace Unity.Formats.USD
         [Tooltip("The default material to use when importing metallic workflow USD Preview Surface materials.")]
         public Material m_metallicWorkflowMaterial;
 
+        [Tooltip("The default material to use when importing mtlx workflow USD Preview Surface materials.")]
+        public Material m_mtlxBifrostMaterial;
+
         [HideInInspector]
         [Tooltip("When enabled, set the GPU Instancing flag on all materials.")]
         public bool m_enableGpuInstancing;
@@ -299,6 +302,8 @@ namespace Unity.Formats.USD
             m_displayColorMaterial = options.materialMap.DisplayColorMaterial;
             m_specularWorkflowMaterial = options.materialMap.SpecularWorkflowMaterial;
             m_metallicWorkflowMaterial = options.materialMap.MetallicWorkflowMaterial;
+            m_mtlxBifrostMaterial = options.materialMap.MtlxXBifrostMaterial;
+
         }
 
         /// <summary>
@@ -348,6 +353,8 @@ namespace Unity.Formats.USD
             options.materialMap.DisplayColorMaterial = m_displayColorMaterial;
             options.materialMap.SpecularWorkflowMaterial = m_specularWorkflowMaterial;
             options.materialMap.MetallicWorkflowMaterial = m_metallicWorkflowMaterial;
+            options.materialMap.MtlxXBifrostMaterial = m_mtlxBifrostMaterial;
+
         }
 
         private bool SceneFileChanged()
@@ -945,28 +952,63 @@ namespace Unity.Formats.USD
                 throw new Exception("Prim not found: " + usdPrimPath);
             }
 
-            var varSets = prim.GetVariantSets();
-            foreach (var sel in selections)
-            {
-                if (!varSets.HasVariantSet(sel.Key))
-                {
-                    throw new Exception("Unknown varient set: " + sel.Key + " at " + usdPrimPath);
-                }
-
-                varSets.GetVariantSet(sel.Key).SetVariantSelection(sel.Value);
-            }
-
             // TODO: sparsely remove prims, rather than blowing away all the children.
             foreach (Transform child in go.transform)
             {
                 GameObject.DestroyImmediate(child.gameObject);
             }
 
-            SceneImportOptions importOptions = new SceneImportOptions();
-            this.StateToOptions(ref importOptions);
-            importOptions.usdRootPath = prim.GetPath();
-            importOptions.ImportType = ImportType.Refresh; // force rebuild is false, so this is a refresh not a full reimport..?
-            SceneImporter.ImportUsd(go, scene, new PrimMap(), true, importOptions);
+            var varSets = prim.GetVariantSets();
+
+            string DefaultLODValue = "LOD_0";
+
+            foreach (var sel in selections)
+            {
+                if (!varSets.HasVariantSet(sel.Key))
+                {
+                    throw new Exception("Unknown variant set: " + sel.Key + " at " + usdPrimPath);
+                }
+
+                if (sel.Value.Contains(DefaultLODValue))
+                {
+                    string OriginalValue = sel.Value;
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        string NewValue = OriginalValue.Replace(DefaultLODValue, "LOD_" + i);
+                        varSets.GetVariantSet(sel.Key).SetVariantSelection(NewValue);
+
+                        SceneImportOptions importOptions = new SceneImportOptions();
+                        this.StateToOptions(ref importOptions);
+                        importOptions.usdRootPath = prim.GetPath();
+                        importOptions.ImportType = ImportType.Refresh; // force rebuild is false, so this is a refresh not a full reimport..?
+                        SceneImporter.ImportUsd(go, scene, new PrimMap(), true, importOptions);
+                    }
+
+                    MeshRenderer[] renderers = go.GetComponentsInChildren<MeshRenderer>();
+                    Array.Sort(renderers, (x, y) => string.Compare(x.gameObject.name, y.gameObject.name, StringComparison.OrdinalIgnoreCase));
+
+                    if (renderers.Length >= 3)
+                    {
+                        LODGroup lodGroup = renderers[0].gameObject.AddComponent<LODGroup>();
+                        LOD[] lods = new LOD[3]; // Change the size based on the number of LOD levels you want
+
+                        lods[0] = new LOD(0.5f, new Renderer[] { renderers[0] });
+                        lods[1] = new LOD(0.2f, new Renderer[] { renderers[1] });
+                        lods[2] = new LOD(0.02f, new Renderer[] { renderers[2] });
+
+                        lodGroup.SetLODs(lods);
+                    }
+                }
+                else
+                {
+                    varSets.GetVariantSet(sel.Key).SetVariantSelection(sel.Value);
+                    SceneImportOptions importOptions = new SceneImportOptions();
+                    this.StateToOptions(ref importOptions);
+                    importOptions.usdRootPath = prim.GetPath();
+                    importOptions.ImportType = ImportType.Refresh; // force rebuild is false, so this is a refresh not a full reimport..?
+                    SceneImporter.ImportUsd(go, scene, new PrimMap(), true, importOptions);
+                }
+            }
         }
     }
 }
