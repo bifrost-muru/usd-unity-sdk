@@ -568,7 +568,7 @@ namespace Unity.Formats.USD
                     {
                         try
                         {
-                            var mat = MaterialImporter.BuildMtlxMaterial(scene,
+                            Material mat = MaterialImporter.BuildMtlxMaterial(scene,
                                 pathAndSample.path,
                                 pathAndSample.sample,
                                 importOptions);

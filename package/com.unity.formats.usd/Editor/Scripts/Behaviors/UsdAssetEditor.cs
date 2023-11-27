@@ -45,7 +45,7 @@ namespace Unity.Formats.USD
         private int m_screenHeight = 1080;
 
         private string m_MaterialStorePath = "BifrostMaterialOverrides";
-        private string m_ShaderToBaseMaterialFrom = "BifrostShader";
+        public Shader m_MaterialBaseShader;
         private bool m_OverwriteExistingMaterials = false;
 
         private enum LinearUnits
@@ -113,6 +113,13 @@ namespace Unity.Formats.USD
                 Debug.LogWarning("No specular material set, reverting to default");
                 var matMap = new MaterialMap();
                 usdAsset.m_specularWorkflowMaterial = matMap.SpecularWorkflowMaterial;
+            }
+
+            if (usdAsset.m_mtlxBifrostMaterial == null)
+            {
+                Debug.LogWarning("No mtlx material set, reverting to default");
+                var matMap = new MaterialMap();
+                usdAsset.m_mtlxBifrostMaterial = matMap.MtlxXBifrostMaterial;
             }
 
             var buttonStyle = new GUIStyle(GUI.skin.button);
@@ -342,19 +349,14 @@ namespace Unity.Formats.USD
 
             GUILayout.Label("Material tools", EditorStyles.boldLabel);
 
-            if (GUILayout.Button("Load FOVs"))
+            if (GUILayout.Button("Load UVs"))
             {
-                LoadFovsOnAllChildren(usdAsset.transform, usdAsset.GetScene());
+                LoadUVsOnAllChildren(usdAsset.transform, usdAsset.GetScene());
             }
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.PrefixLabel("Material Save Path");
             m_MaterialStorePath = GUILayout.TextField(m_MaterialStorePath, 250, "textfield");
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PrefixLabel("Shader to base materials from");
-            m_ShaderToBaseMaterialFrom = GUILayout.TextField(m_ShaderToBaseMaterialFrom, 250, "textfield");
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
@@ -372,18 +374,6 @@ namespace Unity.Formats.USD
                 }
 
                 CreateHierarchyAndMaterials(usdAsset.transform, rootFolderPath);
-                AssetDatabase.Refresh();
-            }
-
-            if (GUILayout.Button("Load Materials"))
-            {
-                string rootFolderPath = "Assets/" + m_MaterialStorePath;
-                if (!Directory.Exists(rootFolderPath))
-                {
-                    Directory.CreateDirectory(rootFolderPath);
-                }
-
-                LoadHierarchyAndMaterials(usdAsset.transform, rootFolderPath);
                 AssetDatabase.Refresh();
             }
 
@@ -451,61 +441,36 @@ namespace Unity.Formats.USD
 
                         foreach (Material material in materials)
                         {
-                            Shader shader = Shader.Find(m_ShaderToBaseMaterialFrom);
-                            if(!shader)
-                            {
-                                shader = Shader.Find("HDRP/Lit");
-                            }
-
                             string materialName = material.name + ".mat";
                             string fullMaterialPath = childFolderPath + "/" + materialName;
 
-                            if (m_OverwriteExistingMaterials && AssetDatabase.LoadAssetAtPath<Material>(fullMaterialPath) != null)
+                            string materialPath = AssetDatabase.GetAssetPath(material);
+                            if(!string.IsNullOrEmpty(materialPath))
                             {
-                                AssetDatabase.DeleteAsset(fullMaterialPath);
+                                Debug.Log($"Material already saved at {materialPath}");
+                                continue;
                             }
 
-                            Material newMaterial = new Material(shader);
-                            AssetDatabase.CreateAsset(newMaterial, fullMaterialPath);
+                            if (AssetDatabase.LoadAssetAtPath<Material>(fullMaterialPath) != null)
+                            {
+                                if(m_OverwriteExistingMaterials)
+                                {
+                                    AssetDatabase.DeleteAsset(fullMaterialPath);
+                                }
+                                else
+                                {
+                                    Debug.Log($"Material exists at {fullMaterialPath} and override material is set to false.");
+                                    continue;
+                                }
+                            }
+
+
+                            AssetDatabase.CreateAsset(material, fullMaterialPath);
                         }
                     }
                 }
 
                 CreateHierarchyAndMaterials(child, childFolderPath);
-            }
-        }
-
-        private void LoadHierarchyAndMaterials(Transform parent, string parentFolderPath)
-        {
-            foreach (Transform child in parent)
-            {
-                string childFolderPath = parentFolderPath + "/" + child.name;
-                LoadHierarchyAndMaterials(child, childFolderPath);
-
-                MeshFilter meshFilter = child.GetComponent<MeshFilter>();
-                if (meshFilter != null)
-                {
-                    MeshRenderer meshRenderer = child.GetComponent<MeshRenderer>();
-
-                    if (meshRenderer != null)
-                    {
-                        Material[] materials = meshRenderer.sharedMaterials;
-
-                        for (int i = 0; i < materials.Length; ++i)
-                        {
-                            string materialName = materials[i].name + ".mat";
-                            string fullMaterialPath = childFolderPath + "/" + materialName;
-                            Material folderMaterial = AssetDatabase.LoadAssetAtPath<Material>(fullMaterialPath);
-
-                            if (folderMaterial != null)
-                            {
-                                materials[i] = folderMaterial;
-                            }
-                        }
-
-                        meshRenderer.sharedMaterials = materials;
-                    }
-                }
             }
         }
 
@@ -564,12 +529,12 @@ namespace Unity.Formats.USD
             }
         }
 
-        private void LoadFovsOnAllChildren(Transform transform, Scene scene)
+        private void LoadUVsOnAllChildren(Transform transform, Scene scene)
         {
             for (int i = 0; i < transform.childCount; ++i)
             {
                 Transform childTransform = transform.GetChild(i);
-                LoadFovsOnAllChildren(childTransform, scene);
+                LoadUVsOnAllChildren(childTransform, scene);
 
                 UsdPrimSource primSource = childTransform.GetComponent<UsdPrimSource>();
 
@@ -602,7 +567,16 @@ namespace Unity.Formats.USD
                             uvs[j] = vector2D;
                         }
 
-                        meshFilter.sharedMesh.uv = uvs;
+                        int verticesLength = meshFilter.sharedMesh.vertices.Length;
+                        int uvsLength = uvs.Length;
+;                       if (verticesLength == uvsLength)
+                        {
+                            meshFilter.sharedMesh.uv = uvs;
+                        }
+                        else
+                        {
+                            Debug.LogError("UV Length does not match vertices!");
+                        }
                     }
                 };
 

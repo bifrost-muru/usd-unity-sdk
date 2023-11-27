@@ -226,35 +226,21 @@ namespace Unity.Formats.USD
                 return null;
             }
 
-            Material mat = Material.Instantiate(options.materialMap.MetallicWorkflowMaterial);
+            Material mat = Material.Instantiate(options.materialMap.MtlxXBifrostMaterial);
 
             var pipeline = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset;
-            if (!pipeline)
+            if (pipeline.GetType().Name == "HDRenderPipelineAsset")
             {
-                var matAdapter = new StandardShaderImporter(mat);
-                matAdapter.ImportMtlxParametersFromUsd(scene, materialPath, mtlxSurf, options);
-                matAdapter.ImportFromUsd();
-            }
-            else if (pipeline.GetType().Name == "HDRenderPipelineAsset")
-            {
-                // Robustness: Comparing a strng ^ here is not great, but there is no other option.
                 var matAdapter = new HdrpShaderImporter(mat);
                 matAdapter.ImportMtlxParametersFromUsd(scene, materialPath, mtlxSurf, options);
-                matAdapter.ImportFromUsd();
-            }
-            else if (pipeline.GetType().Name == "UniversalRenderPipelineAsset")
-            {
-                var matAdapter = new UrpShaderImporter(mat);
-                matAdapter.ImportMtlxParametersFromUsd(scene, materialPath, mtlxSurf, options);
-                matAdapter.ImportFromUsd();
+                matAdapter.ImportMtlxFromUsd();
             }
             else
             {
-                // Fallback to the Standard importer, which may pickup some attributes by luck.
-                var matAdapter = new StandardShaderImporter(mat);
-                matAdapter.ImportMtlxParametersFromUsd(scene, materialPath, mtlxSurf, options);
-                matAdapter.ImportFromUsd();
+                Debug.LogError($"MaterialX is only supported in HDRP");
+                return mat;
             }
+
 
             // Get the material name from the path
             if (mat != null && !string.IsNullOrEmpty(materialPath))

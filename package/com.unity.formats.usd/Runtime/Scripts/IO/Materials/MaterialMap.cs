@@ -52,7 +52,7 @@ namespace Unity.Formats.USD
         /// </summary>
         public bool useOriginalShaderIfAvailable;
 
-        Material m_displayColorMaterial, m_specularWorkflowMaterial, m_metallicWorkflowMaterial;
+        Material m_displayColorMaterial, m_specularWorkflowMaterial, m_metallicWorkflowMaterial, m_mtlxBifrostMaterial;
 
         /// <summary>
         /// A material to use when no material could be found.
@@ -86,7 +86,15 @@ namespace Unity.Formats.USD
             }
             set { m_metallicWorkflowMaterial = value; }
         }
-
+        public Material MtlxXBifrostMaterial
+        {
+            get
+            {
+                if (m_mtlxBifrostMaterial == null) InstantiateMaterials();
+                return m_mtlxBifrostMaterial;
+            }
+            set { m_mtlxBifrostMaterial = value; }
+        }
         void InstantiateMaterials()
         {
             var pipeline = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset;
@@ -96,6 +104,7 @@ namespace Unity.Formats.USD
                 SpecularWorkflowMaterial = new Material(Shader.Find("Standard (Specular setup)"));
                 MetallicWorkflowMaterial = new Material(Shader.Find("Standard"));
                 DisplayColorMaterial = new Material(Shader.Find("USD/StandardVertexColor"));
+                Debug.LogError("Bifrost does not support SRP. Please enable HDRP.");
             }
             else
             {
@@ -107,6 +116,16 @@ namespace Unity.Formats.USD
                 MetallicWorkflowMaterial = Material.Instantiate(pipeline.GetDefaultMaterial());
 #endif
                 DisplayColorMaterial = new Material(Shader.Find("USD/SrpVertexColor"));
+
+                Shader mtlxShader = Shader.Find("Shader Graphs/M_DefaultLitShader");
+                if(mtlxShader != null)
+                {
+                    MtlxXBifrostMaterial = new Material(mtlxShader);
+                }
+                else
+                {
+                    Debug.LogError("Bifrost shader not found. Please correct spelling.");
+                }
             }
         }
 

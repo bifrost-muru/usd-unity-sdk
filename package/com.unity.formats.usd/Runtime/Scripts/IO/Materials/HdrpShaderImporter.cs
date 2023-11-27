@@ -128,6 +128,38 @@ namespace Unity.Formats.USD
             }
         }
 
+        public void ImportMtlxFromUsd()
+        {
+            Material mat = Material;
+
+            /* _BaseColor_map - Base color texture
+             * _Normal_map - Normal texture
+             * _Roughness_map - Roughness texture
+             * _Metallic_map - Metallic texture
+             * _Use_BaseColor_map - bool to use texture
+             * _Use_Roughness_map - bool to use roughness
+             * _Use_Normal_map - bool to use normal
+             * _Use_Metallic_map - bool to use metallic
+             * _BaseColor - color if base texture not present
+             * _Roughness - float for roughness
+             * _Metallic - float for metallic
+             */
+
+            if (DiffuseMap)
+            {
+                Debug.Log("here");
+                mat.SetTexture("_BaseColor_map", DiffuseMap);
+                mat.SetColor("_BaseColor", Color.white);
+                mat.SetInt("_Use_BaseColor_map", 1);
+            }
+            else
+            {
+                mat.SetColor("_BaseColor", Diffuse.GetValueOrDefault(mat.color));
+                mat.SetInt("_Use_BaseColor_map", 0);
+            }
+
+        }
+
         private static Texture2D BuildMaskMap(Texture2D red, Texture2D green, Texture2D blue, Texture2D alpha)
         {
             var maxW = Mathf.Max(red ? red.width : 0, green ? green.width : 0);

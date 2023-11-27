@@ -34,6 +34,9 @@ namespace USD.NET.Unity
         [InputParameter("_BaseColor")]
         public Connectable<Vector3> base_color = new Connectable<Vector3>(new Vector3(0.18f, 0.18f, 0.18f));
 
+        [InputParameter("_Normal")]
+        public Connectable<Vector3> normal = new Connectable<Vector3>(new Vector3(0.18f, 0.18f, 0.18f));
+
         [UsdSchema("hmtlxcolorcorrect1")]
         public class Hmtlxcolorcorrect1 : SampleBase
         {

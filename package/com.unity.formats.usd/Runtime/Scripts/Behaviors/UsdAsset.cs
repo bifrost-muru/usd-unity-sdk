@@ -106,6 +106,9 @@ namespace Unity.Formats.USD
         [Tooltip("The default material to use when importing metallic workflow USD Preview Surface materials.")]
         public Material m_metallicWorkflowMaterial;
 
+        [Tooltip("The default material to use when importing mtlx workflow USD Preview Surface materials.")]
+        public Material m_mtlxBifrostMaterial;
+
         [HideInInspector]
         [Tooltip("When enabled, set the GPU Instancing flag on all materials.")]
         public bool m_enableGpuInstancing;
@@ -299,6 +302,8 @@ namespace Unity.Formats.USD
             m_displayColorMaterial = options.materialMap.DisplayColorMaterial;
             m_specularWorkflowMaterial = options.materialMap.SpecularWorkflowMaterial;
             m_metallicWorkflowMaterial = options.materialMap.MetallicWorkflowMaterial;
+            m_mtlxBifrostMaterial = options.materialMap.MtlxXBifrostMaterial;
+
         }
 
         /// <summary>
@@ -348,6 +353,8 @@ namespace Unity.Formats.USD
             options.materialMap.DisplayColorMaterial = m_displayColorMaterial;
             options.materialMap.SpecularWorkflowMaterial = m_specularWorkflowMaterial;
             options.materialMap.MetallicWorkflowMaterial = m_metallicWorkflowMaterial;
+            options.materialMap.MtlxXBifrostMaterial = m_mtlxBifrostMaterial;
+
         }
 
         private bool SceneFileChanged()
