@@ -86,6 +86,9 @@ namespace Unity.Formats.USD
             }
             set { m_metallicWorkflowMaterial = value; }
         }
+
+        public string MtlxXBifrostShaderName = "Shader Graphs/M_Bifrost_DefaultLitShader";
+
         public Material MtlxXBifrostMaterial
         {
             get
@@ -95,6 +98,7 @@ namespace Unity.Formats.USD
             }
             set { m_mtlxBifrostMaterial = value; }
         }
+
         void InstantiateMaterials()
         {
             var pipeline = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset;
@@ -117,7 +121,7 @@ namespace Unity.Formats.USD
 #endif
                 DisplayColorMaterial = new Material(Shader.Find("USD/SrpVertexColor"));
 
-                Shader mtlxShader = Shader.Find("Shader Graphs/M_DefaultLitShader");
+                Shader mtlxShader = Shader.Find(MtlxXBifrostShaderName);
                 if(mtlxShader != null)
                 {
                     MtlxXBifrostMaterial = new Material(mtlxShader);

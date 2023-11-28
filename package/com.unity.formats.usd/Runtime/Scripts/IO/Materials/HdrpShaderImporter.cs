@@ -132,22 +132,35 @@ namespace Unity.Formats.USD
         {
             Material mat = Material;
 
-            /* _BaseColor_map - Base color texture
-             * _Normal_map - Normal texture
-             * _Roughness_map - Roughness texture
-             * _Metallic_map - Metallic texture
-             * _Use_BaseColor_map - bool to use texture
-             * _Use_Roughness_map - bool to use roughness
-             * _Use_Normal_map - bool to use normal
-             * _Use_Metallic_map - bool to use metallic
+            /* _Tiling - Base color texture
+             * 
+             * Base Color
              * _BaseColor - color if base texture not present
-             * _Roughness - float for roughness
-             * _Metallic - float for metallic
+             * _BaseColor_map - Base color texture
+             * _Use_BaseColor_map - bool to use texture
+             * 
+             * Color Correction
+             * _Gain
+             * _Contrast
+             * _HueShift
+             * _Saturation
+             * 
+             * Roughness
+             * _Roughness - color
+             * _Use_Roughness_map - bool
+             * _Roughness_map - texture
+             * 
+             * Metallic
+             * _Metallic - color
+             * _Use_Metallic_map - bool
+             * _Metallic_map - texture
+             * 
+             * _Use_Normal_map - bool
+             * _Normal_map - normal
              */
 
             if (DiffuseMap)
             {
-                Debug.Log("here");
                 mat.SetTexture("_BaseColor_map", DiffuseMap);
                 mat.SetColor("_BaseColor", Color.white);
                 mat.SetInt("_Use_BaseColor_map", 1);
@@ -156,6 +169,31 @@ namespace Unity.Formats.USD
             {
                 mat.SetColor("_BaseColor", Diffuse.GetValueOrDefault(mat.color));
                 mat.SetInt("_Use_BaseColor_map", 0);
+            }
+
+            // #TODO : Parse default value from houdini
+            float defaultRoughness = Roughness.GetValueOrDefault(0.2f);
+
+            if (RoughnessMap)
+            {
+                mat.SetTexture("_Roughness_map", RoughnessMap);
+                mat.SetFloat("_Roughness", defaultRoughness);
+                mat.SetInt("_Use_Roughness_map", 1);
+            }
+            else
+            {
+                mat.SetFloat("_Roughness", defaultRoughness);
+                mat.SetInt("_Use_Roughness_map", 0);
+            }
+
+            if (NormalMap)
+            {
+                mat.SetTexture("_Normal_map", NormalMap);
+                mat.SetInt("_Use_Normal_map", 1);
+            }
+            else
+            {
+                mat.SetInt("_Use_Normal_map", 0);
             }
 
         }
