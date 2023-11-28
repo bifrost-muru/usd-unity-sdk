@@ -106,6 +106,8 @@ namespace Unity.Formats.USD
         [Tooltip("The default material to use when importing metallic workflow USD Preview Surface materials.")]
         public Material m_metallicWorkflowMaterial;
 
+        public string MtlxXBifrostShaderName = "Shader Graphs/M_Bifrost_DefaultLitShader";
+
         [Tooltip("The default material to use when importing mtlx workflow USD Preview Surface materials.")]
         public Material m_mtlxBifrostMaterial;
 

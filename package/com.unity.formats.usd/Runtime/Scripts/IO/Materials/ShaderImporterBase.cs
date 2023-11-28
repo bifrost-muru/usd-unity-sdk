@@ -188,9 +188,18 @@ namespace Unity.Formats.USD
             var primvars = new List<string>();
             string uvPrimvar = null;
 
-            ImportColorOrMap(scene, mtlxSurf.hmtlxcolorcorrect1.In, false, options, ref DiffuseMap, ref Diffuse,
+            ImportColorOrMap(scene, mtlxSurf.base_color_in.In, false, options, ref DiffuseMap, ref Diffuse,
                 out uvPrimvar);
             MergePrimvars(uvPrimvar, primvars);
+
+            ImportColorOrMap(scene, mtlxSurf.normals_in.In, true, options, ref NormalMap, ref Diffuse,
+               out uvPrimvar);
+            MergePrimvars(uvPrimvar, primvars);
+
+            ImportColorOrMap(scene, mtlxSurf.specular_roughness, false, options, ref RoughnessMap, ref Diffuse,
+                out uvPrimvar);
+            MergePrimvars(uvPrimvar, primvars);
+
 
             options.materialMap.SetPrimvars(materialPath, primvars);
         }

@@ -35,16 +35,54 @@ namespace USD.NET.Unity
         public Connectable<Vector3> base_color = new Connectable<Vector3>(new Vector3(0.18f, 0.18f, 0.18f));
 
         [InputParameter("_Normal")]
-        public Connectable<Vector3> normal = new Connectable<Vector3>(new Vector3(0.18f, 0.18f, 0.18f));
+        [DataMember(Name = "normal")]
+        public Connectable<Vector3> normals = new Connectable<Vector3>(new Vector3(0.18f, 0.18f, 0.18f));
+
+        /* 
+         * mtlx:surface.connect -> mtlxstandard_surface1.outputs
+         * mtlxstandard_surface1.outputs -> inputs:specular_roughness -> value
+         * mtlxstandard_surface1.outputs -> inputs:specular_roughness.connect
+         * specular_roughness.connect -> roughness.outputs:out
+         * roughness -> inputs:file 
+         */
+        [InputParameter("_SpecularRoughness")]
+        public Connectable<Vector3> specular_roughness = new Connectable<Vector3>(new Vector3(0.18f, 0.18f, 0.18f));
 
         [UsdSchema("hmtlxcolorcorrect1")]
-        public class Hmtlxcolorcorrect1 : SampleBase
+        public class ExtractInTexture : SampleBase
         {
             [InputParameter("_In")]
             [DataMember(Name = "in")]
             public Connectable<Vector3> In = new Connectable<Vector3>(new Vector3(0.18f, 0.18f, 0.18f));
         }
 
-        public Hmtlxcolorcorrect1 hmtlxcolorcorrect1 = new Hmtlxcolorcorrect1();
+        /* 
+         * mtlx:surface.connect -> mtlxstandard_surface1.outputs
+         * mtlxstandard_surface1 -> inputs:base_color.connect
+         * base_color.connect -> hmtlxcolorcorrect1.outputs
+         * hmtlxcolorcorrect1 -> in.connect
+         * in -> basecolor.outputs:out
+         * basecolor -> inputs:file
+         */
+        public ExtractInTexture base_color_in = new ExtractInTexture();
+
+        /* 
+         * mtlx:surface.connect -> mtlxstandard_surface1.outputs
+         * mtlxstandard_surface1.outputs -> inputs:normal.connect
+         * inputs:normal.connect -> mtlxnormalmap1.outputs
+         * mtlxnormalmap1 -> in.connect
+         * in.connect -> normal.outputs:out
+         * normal -> inputs:file
+         */
+        public ExtractInTexture normals_in = new ExtractInTexture();
+
+        /* 
+         * mtlx:surface.connect -> mtlxstandard_surface1.outputs
+         * mtlxstandard_surface1.outputs -> metalness 
+         * customData -> HoudiniPreviewTags (dictionary)
+         * HoudiniPreviewTags (dictionary) -> ogl_metallic
+         */
+        [InputParameter("_Metalness")]
+        public Connectable<Vector3> metalness = new Connectable<Vector3>(new Vector3(0.18f, 0.18f, 0.18f));
     }
 }

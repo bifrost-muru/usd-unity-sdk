@@ -215,15 +215,14 @@ namespace Unity.Formats.USD
             MtlxSurfaceSample mtlxSurf = new MtlxSurfaceSample();
             scene.Read(new pxr.SdfPath(sample.surface.connectedPath).GetPrimPath(), mtlxSurf);
 
-            if (string.IsNullOrEmpty(mtlxSurf.base_color.connectedPath))
+            if (!string.IsNullOrEmpty(mtlxSurf.base_color.connectedPath))
             {
-                return null;
+                scene.Read(new pxr.SdfPath(mtlxSurf.base_color.connectedPath).GetPrimPath(), mtlxSurf.base_color_in);
             }
-            scene.Read(new pxr.SdfPath(mtlxSurf.base_color.connectedPath).GetPrimPath(), mtlxSurf.hmtlxcolorcorrect1);
 
-            if (string.IsNullOrEmpty(mtlxSurf.hmtlxcolorcorrect1.In.connectedPath))
+            if (!string.IsNullOrEmpty(mtlxSurf.normals.connectedPath))
             {
-                return null;
+                scene.Read(new pxr.SdfPath(mtlxSurf.normals.connectedPath).GetPrimPath(), mtlxSurf.normals_in);
             }
 
             Material mat = Material.Instantiate(options.materialMap.MtlxXBifrostMaterial);

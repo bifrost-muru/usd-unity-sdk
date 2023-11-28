@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System;
 using USD.NET;
 using pxr;
+using System.Drawing;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
 #else
@@ -119,6 +120,7 @@ namespace Unity.Formats.USD
             {
                 Debug.LogWarning("No mtlx material set, reverting to default");
                 var matMap = new MaterialMap();
+                matMap.MtlxXBifrostShaderName = usdAsset.MtlxXBifrostShaderName;
                 usdAsset.m_mtlxBifrostMaterial = matMap.MtlxXBifrostMaterial;
             }
 
