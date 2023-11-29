@@ -200,8 +200,6 @@ namespace Unity.Formats.USD
                 out uvPrimvar);
             MergePrimvars(uvPrimvar, primvars);
 
-
-            options.materialMap.SetPrimvars(materialPath, primvars);
         }
     }
 }
