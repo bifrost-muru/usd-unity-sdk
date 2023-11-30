@@ -1,11 +1,6 @@
-using Codice.Client.Common;
 using pxr;
-using System.Collections;
-using System.Collections.Generic;
-using System.Net.Mail;
 using UnityEngine;
 using USD.NET;
-using static UnityEngine.GraphicsBuffer;
 
 namespace Unity.Formats.USD
 {
