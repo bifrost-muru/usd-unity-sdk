@@ -212,8 +212,40 @@ namespace Unity.Formats.USD
                 return null;
             }
 
+            /*  https://github.com/Unity-Technologies/usd-unity-sdk/issues/147
+             *  [System.Serializable]
+                public class SurfaceParams : SampleBase
+                {
+                    // You can either use a namespace or nested "Sample" objects.
+                    // Using nested objects probably better matches the data, but here
+                    // I'm just using the UsdNamespace attribute because it's simpler.
+                    [UsdNamespace("material:parameters")]
+                    [CustomData]
+                    public int Bake_Bake_DiffuseColor;
+                }
+            */
+            // Debug.Log(pxr.UsdCs.VtValueToint(prim.GetCustomDataByKey(new pxr.TfToken("material:parameters:Bake_Bake_DiffuseColor"))));
+            // var dataDict = prim.GetCustomData();
+            // Debug.Log(pxr.UsdCs.VtValueToint(dataDict.GetValueAtPath("material:parameters:Bake_Bake_DiffuseColor")));
+            /*
+             * scene.Read<SurfaceParams>("/root/materials/pxrSurface/basicSurface_mat", sample);
+             * scene.Close();
+             * Debug.Log(sample.Bake_Bake_DiffuseColor);
+             */
+
             MtlxSurfaceSample mtlxSurf = new MtlxSurfaceSample();
-            scene.Read(new pxr.SdfPath(sample.surface.connectedPath).GetPrimPath(), mtlxSurf);
+            pxr.SdfPath matPath = new pxr.SdfPath(sample.surface.connectedPath).GetPrimPath();
+            scene.Read(matPath, mtlxSurf);
+
+
+            pxr.UsdPrim prim = scene.GetPrimAtPath(matPath);
+            pxr.TfToken sdfAttrName = new pxr.TfToken(IntrinsicTypeConverter.JoinNamespace("inputs", "metalness"));
+            pxr.UsdAttribute usdAttribute = prim.GetAttribute(sdfAttrName);
+            string oglmetallic = pxr.UsdCs.VtValueTostring(usdAttribute.GetCustomDataByKey(new pxr.TfToken("HoudiniPreviewTags:ogl_metallic")));
+
+            Debug.Log($"Prim at path : {matPath}");
+            string metallicString = prim.GetCustomDataByKey(new pxr.TfToken("HoudiniPreviewTags:ogl_metallic"));
+            Debug.Log($"Metalness : {oglmetallic}");
 
             if (!string.IsNullOrEmpty(mtlxSurf.base_color.connectedPath))
             {

@@ -196,6 +196,21 @@ namespace Unity.Formats.USD
                 mat.SetInt("_Use_Normal_map", 0);
             }
 
+            // #TODO : Parse default value from houdini
+            float defaultMetallness = Metallic.GetValueOrDefault(0.0f);
+
+            if (MetallicMap)
+            {
+                mat.SetFloat("_Metallic", Metallic.GetValueOrDefault(defaultMetallness));
+                mat.SetTexture("_Metallic_map", MetallicMap);
+                mat.SetInt("_Use_Metallic_map", 1);
+            }
+            else
+            {
+                mat.SetFloat("_Metallic", Metallic.GetValueOrDefault(defaultMetallness));
+                mat.SetInt("_Use_Metallic_map", 0);
+            }
+
         }
 
         private static Texture2D BuildMaskMap(Texture2D red, Texture2D green, Texture2D blue, Texture2D alpha)

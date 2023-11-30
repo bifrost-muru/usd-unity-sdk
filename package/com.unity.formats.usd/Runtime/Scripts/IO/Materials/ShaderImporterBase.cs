@@ -200,6 +200,12 @@ namespace Unity.Formats.USD
                 out uvPrimvar);
             MergePrimvars(uvPrimvar, primvars);
 
+            float newMetallic = 0;
+            bool metallicval = float.TryParse(mtlxSurf.metalness.ogl_metallic, out newMetallic);
+            if(metallicval)
+            {
+                Metallic = newMetallic;
+            }
         }
     }
 }
