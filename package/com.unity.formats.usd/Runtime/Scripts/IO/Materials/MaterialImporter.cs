@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Generic;
 using System.IO;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using USD.NET;
 using USD.NET.Unity;
@@ -70,7 +72,8 @@ namespace Unity.Formats.USD
             foreach (pxr.UsdShadeMaterial usdMat in matVector)
             {
                 matIndex++;
-                Material unityMat = importOptions.materialMap[usdMat.GetPath()];
+                string path = usdMat.GetPath();
+                Material unityMat = importOptions.materialMap[path];
 
                 if (unityMat == null)
                 {

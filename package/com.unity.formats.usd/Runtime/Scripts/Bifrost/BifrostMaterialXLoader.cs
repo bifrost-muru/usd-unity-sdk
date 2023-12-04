@@ -106,6 +106,9 @@ public class BifrostMaterialXLoader
             {
                 importOptions.materialMap[materialPath] = mat;
             }
+            List<string> stList = new List<string>();
+            stList.Add("st");
+            importOptions.materialMap.SetPrimvars(materialPath, stList);
         }
         else
         {
@@ -135,6 +138,9 @@ public class BifrostMaterialXLoader
         }
 
         mat = Material.Instantiate(importOptions.materialMap.MtlxXBifrostMaterial);
+
+        string destinationDirectory = Path.GetDirectoryName(destPath);
+        System.IO.Directory.CreateDirectory(destinationDirectory);
         AssetDatabase.CreateAsset(mat, destPath);
 
         var matAdapter = new HdrpShaderImporter(mat);
