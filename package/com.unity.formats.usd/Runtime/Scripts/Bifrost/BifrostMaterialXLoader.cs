@@ -176,6 +176,8 @@ public class BifrostMaterialXLoader
         string currentShaderKey = tokenNames[2];
         string connectString = ".connect";
         string fileString = ":file";
+        string basecolor_texture = ":basecolor_texture";
+
         if (tokenName.EndsWith(connectString))
         {
             string tokenWithoutConnect = tokenName.Substring(0, tokenName.Length - connectString.Length);
@@ -228,11 +230,11 @@ public class BifrostMaterialXLoader
                 }
                 else
                 {
-                    Debug.Log($"{connectedPrimName} does not have nodes to check");
+                    Debug.LogWarning($"{connectedPrimName} does not have nodes to check");
                 }
             }
         }
-        else if (tokenName.EndsWith(fileString))
+        else if (tokenName.EndsWith(fileString) || tokenName.EndsWith(basecolor_texture))
         {
             string shaderKeyToStoreTexture = "";
             if(shaderType == "texture" && shaderKey != string.Empty)
