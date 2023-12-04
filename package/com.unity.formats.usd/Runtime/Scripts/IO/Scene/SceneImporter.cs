@@ -562,6 +562,62 @@ namespace Unity.Formats.USD
                     }
                 }
 
+#if true
+                foreach (pxr.SdfPath path in (primMap.Materials))
+                {
+                    BifrostMaterialXLoader matxLoader = new BifrostMaterialXLoader(scene, importOptions);
+                    matxLoader.ParseMaterialXNodesIntoShaderMap(path);
+                }
+#endif
+#if false
+                {
+                    foreach (pxr.SdfPath path in (primMap.Materials))
+                    {
+                        pxr.UsdPrim matPrim = scene.GetPrimAtPath(path);
+                        if (matPrim != null)
+                        {
+                            pxr.TfToken surfaceTokenName = new pxr.TfToken("outputs:mtlx:surface");
+                            pxr.UsdAttribute surfaceAttribute = matPrim.GetAttribute(surfaceTokenName);
+
+                            pxr.SdfPathVector surfaceConnection = new pxr.SdfPathVector();
+                            if (surfaceAttribute.GetConnections(surfaceConnection) && surfaceConnection.Count > 0)
+                            {
+                                string surfaceConnectedPath = surfaceConnection[0].ToString();
+                                pxr.SdfPath surfaceConnectedPrimPath = new pxr.SdfPath(surfaceConnectedPath).GetPrimPath();
+                                pxr.UsdPrim surfacePrim = scene.GetPrimAtPath(surfaceConnectedPrimPath);
+                                //  pxr.UsdTimeCode.Default()
+                                // double usdTime = scene.Time.GetValueOrDefault();
+
+                                if (surfacePrim)
+                                {
+                                    pxr.TfToken metalnessToken = new pxr.TfToken("inputs:metalness");
+                                    pxr.UsdAttribute metalnessAttribute = surfacePrim.GetAttribute(metalnessToken);
+                                    string oglmetallic = pxr.UsdCs.VtValueTostring(metalnessAttribute.GetCustomDataByKey(new pxr.TfToken("HoudiniPreviewTags:ogl_metallic")));
+                                    Debug.Log($"Metalness : {oglmetallic}");
+                                }
+
+                                if (surfacePrim)
+                                {
+                                    pxr.TfToken baseColorToken = new pxr.TfToken("inputs:base_color");
+                                    pxr.UsdAttribute baseColorAttribute = surfacePrim.GetAttribute(baseColorToken);
+                                    pxr.SdfPathVector baseColorConnection = new pxr.SdfPathVector();
+                                    if (baseColorAttribute.GetConnections(baseColorConnection) && baseColorConnection.Count > 0)
+                                    {
+                                        string baseColorConnectionPath = baseColorConnection[0].ToString();
+                                        pxr.SdfPath baseColorConnectedNodePath = new pxr.SdfPath(baseColorConnectionPath).GetPrimPath();
+                                        pxr.UsdPrim baseColorConnectedNode = scene.GetPrimAtPath(baseColorConnectedNodePath);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+#endif
+#if false
+                // Get value of primitive
+                // follow up with custom data
+                // get connection
+
                 {
                     SampleCollection<MtlxMaterialSample> MaterialSamples = scene.ReadAll<MtlxMaterialSample>(primMap.Materials);
                     foreach (var pathAndSample in MaterialSamples)
@@ -591,6 +647,8 @@ namespace Unity.Formats.USD
                         }
                     }
                 }
+#endif
+
             }
 
             Profiler.EndSample();
@@ -1349,6 +1407,10 @@ namespace Unity.Formats.USD
             }
 
             Profiler.EndSample();
+
+            IterateChildrenAndDeleteMatchingNames(root.transform, "proxy");
+            IterateChildrenAndDeleteMatchingNames(root.transform, "Prototypes");
+
         }
 
         private static bool ShouldYield(float targetTime, Stopwatch timer)
@@ -1376,5 +1438,31 @@ namespace Unity.Formats.USD
 
             return skinnedMesh;
         }
+
+        private static void IterateChildrenAndDeleteMatchingNames(UnityEngine.Transform go, string name)
+        {
+            List<UnityEngine.Transform> childrenToDelete = new List<UnityEngine.Transform>();
+
+            GetAllChildTransformsWithMatchingName(go.transform, name, ref childrenToDelete);
+
+            for (int i = 0; i < childrenToDelete.Count; ++i)
+            {
+                UnityEngine.Object.DestroyImmediate(childrenToDelete[i].gameObject);
+            }
+        }
+
+        private static void GetAllChildTransformsWithMatchingName(UnityEngine.Transform go, string name, ref List<UnityEngine.Transform> children)
+        {
+            if (go.name == name)
+            {
+                children.Add(go);
+            }
+
+            for (int i = 0; i < go.childCount; ++i)
+            {
+                GetAllChildTransformsWithMatchingName(go.GetChild(i), name, ref children);
+            }
+        }
     }
+
 }

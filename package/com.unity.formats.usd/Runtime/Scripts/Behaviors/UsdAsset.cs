@@ -111,6 +111,9 @@ namespace Unity.Formats.USD
         [Tooltip("The default material to use when importing mtlx workflow USD Preview Surface materials.")]
         public Material m_mtlxBifrostMaterial;
 
+        [Tooltip("The default material to use when importing mtlx workflow USD Preview Surface materials.")]
+        private string m_BifrostMaterialStorePath = "BifrostMaterials";
+
         [HideInInspector]
         [Tooltip("When enabled, set the GPU Instancing flag on all materials.")]
         public bool m_enableGpuInstancing;
@@ -169,6 +172,7 @@ namespace Unity.Formats.USD
         public bool m_importSceneInstances = true;
         public bool m_importPointInstances = true;
         public bool m_importMonoBehaviors = false;
+        public bool m_overwriteMats = false;
 
 #if false
         [Header("Export Settings")]
@@ -279,6 +283,7 @@ namespace Unity.Formats.USD
             m_importSceneInstances = options.importSceneInstances;
             m_importPointInstances = options.importPointInstances;
             m_importMonoBehaviors = options.importMonoBehaviours;
+            m_overwriteMats = options.overwriteMats;
 
             // Mesh options.
             m_points = options.meshOptions.points;
@@ -330,6 +335,7 @@ namespace Unity.Formats.USD
             options.importSceneInstances = m_importSceneInstances;
             options.importPointInstances = m_importPointInstances;
             options.importMonoBehaviours = m_importMonoBehaviors;
+            options.overwriteMats = m_overwriteMats;
 
             // Mesh options.
             options.meshOptions.points = m_points;

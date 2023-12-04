@@ -1,0 +1,17 @@
+root,outputs:mtlx:displacement.connect,,,,,
+,outputs:mtlx:surface.connect,,,,,
+,outputs:surface.connect,,,,,
+mtlxstandard_surface1,inputs:base_color,color,_BaseColor,customData,HoudiniPreviewTags:default_value,double3
+,inputs:base_color.connect,texture,_BaseColor_map,,,
+,inputs:normal.connect,texture,_Normal_map,,,
+,inputs:metalness,float,_Metallic,customData,HoudiniPreviewTags:ogl_metallic,double
+,inputs:specular_roughness,float,_Roughness,,,
+,inputs:specular_roughness.connect,texture,_Roughness_map,,,
+hmtlxcolorcorrect1,inputs:in.connect,,,,,
+mtlximage1,inputs:file,,,,,
+mtlxnormalmap1,inputs:in.connect,,,,,
+mtlxcombine3,inputs:in1.connect,,,,,
+mtlxseparate4v1,inputs:in.connect,,,,,
+basecolor,inputs:file,,,,,
+normal,inputs:file,,,,,
+roughness,inputs:file,,,,,

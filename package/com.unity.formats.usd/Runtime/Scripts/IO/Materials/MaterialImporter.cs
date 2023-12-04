@@ -233,19 +233,20 @@ namespace Unity.Formats.USD
              * Debug.Log(sample.Bake_Bake_DiffuseColor);
              */
 
+#if false
+            {
+                pxr.SdfPath surfacePath = new pxr.SdfPath(sample.surface.connectedPath).GetPrimPath();
+                pxr.UsdPrim prim = scene.GetPrimAtPath(surfacePath);
+                pxr.TfToken sdfAttrName = new pxr.TfToken(IntrinsicTypeConverter.JoinNamespace("inputs", "metalness"));
+                pxr.UsdAttribute usdAttribute = prim.GetAttribute(sdfAttrName);
+                string oglmetallic = pxr.UsdCs.VtValueTostring(usdAttribute.GetCustomDataByKey(new pxr.TfToken("HoudiniPreviewTags:ogl_metallic")));
+                Debug.Log($"Metalness : {oglmetallic}");
+            }
+#endif
+
             MtlxSurfaceSample mtlxSurf = new MtlxSurfaceSample();
             pxr.SdfPath matPath = new pxr.SdfPath(sample.surface.connectedPath).GetPrimPath();
             scene.Read(matPath, mtlxSurf);
-
-
-            pxr.UsdPrim prim = scene.GetPrimAtPath(matPath);
-            pxr.TfToken sdfAttrName = new pxr.TfToken(IntrinsicTypeConverter.JoinNamespace("inputs", "metalness"));
-            pxr.UsdAttribute usdAttribute = prim.GetAttribute(sdfAttrName);
-            string oglmetallic = pxr.UsdCs.VtValueTostring(usdAttribute.GetCustomDataByKey(new pxr.TfToken("HoudiniPreviewTags:ogl_metallic")));
-
-            Debug.Log($"Prim at path : {matPath}");
-            string metallicString = prim.GetCustomDataByKey(new pxr.TfToken("HoudiniPreviewTags:ogl_metallic"));
-            Debug.Log($"Metalness : {oglmetallic}");
 
             if (!string.IsNullOrEmpty(mtlxSurf.base_color.connectedPath))
             {
