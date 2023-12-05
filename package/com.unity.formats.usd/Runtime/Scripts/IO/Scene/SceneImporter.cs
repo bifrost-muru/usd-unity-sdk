@@ -562,35 +562,12 @@ namespace Unity.Formats.USD
                     }
                 }
 
+                foreach (pxr.SdfPath path in (primMap.Materials))
                 {
-                    SampleCollection<MtlxMaterialSample> MaterialSamples = scene.ReadAll<MtlxMaterialSample>(primMap.Materials);
-                    foreach (var pathAndSample in MaterialSamples)
-                    {
-                        try
-                        {
-                            Material mat = MaterialImporter.BuildMtlxMaterial(scene,
-                                pathAndSample.path,
-                                pathAndSample.sample,
-                                importOptions);
-                            if (mat != null)
-                            {
-                                importOptions.materialMap[pathAndSample.path] = mat;
-                            }
-                        }
-                        catch (System.Exception ex)
-                        {
-                            Debug.LogException(
-                                new ImportException("Error processing material <" + pathAndSample.path + ">", ex));
-                            primMap.HasErrors = true;
-                        }
-
-                        if (ShouldYield(targetTime, timer))
-                        {
-                            yield return null;
-                            ResetTimer(timer);
-                        }
-                    }
+                    BifrostMaterialXLoader matxLoader = new BifrostMaterialXLoader(scene, importOptions);
+                    matxLoader.ParseMaterialXNodesIntoShaderMap(path);
                 }
+
             }
 
             Profiler.EndSample();
@@ -1349,6 +1326,10 @@ namespace Unity.Formats.USD
             }
 
             Profiler.EndSample();
+
+            IterateChildrenAndDeleteMatchingNames(root.transform, "proxy");
+            IterateChildrenAndDeleteMatchingNames(root.transform, "Prototypes");
+
         }
 
         private static bool ShouldYield(float targetTime, Stopwatch timer)
@@ -1376,5 +1357,31 @@ namespace Unity.Formats.USD
 
             return skinnedMesh;
         }
+
+        private static void IterateChildrenAndDeleteMatchingNames(UnityEngine.Transform go, string name)
+        {
+            List<UnityEngine.Transform> childrenToDelete = new List<UnityEngine.Transform>();
+
+            GetAllChildTransformsWithMatchingName(go.transform, name, ref childrenToDelete);
+
+            for (int i = 0; i < childrenToDelete.Count; ++i)
+            {
+                UnityEngine.Object.DestroyImmediate(childrenToDelete[i].gameObject);
+            }
+        }
+
+        private static void GetAllChildTransformsWithMatchingName(UnityEngine.Transform go, string name, ref List<UnityEngine.Transform> children)
+        {
+            if (go.name == name)
+            {
+                children.Add(go);
+            }
+
+            for (int i = 0; i < go.childCount; ++i)
+            {
+                GetAllChildTransformsWithMatchingName(go.GetChild(i), name, ref children);
+            }
+        }
     }
+
 }

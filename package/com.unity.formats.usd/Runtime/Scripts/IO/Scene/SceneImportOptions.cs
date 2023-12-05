@@ -87,6 +87,11 @@ namespace Unity.Formats.USD
         public string projectAssetPath = "Assets/";
 
         /// <summary>
+        /// The root location in the Unity project where imported files will be created.
+        /// </summary>
+        public string materialStorePath = "BifrostMaterials";
+
+        /// <summary>
         /// The path in the USD file at which to import/export.
         /// </summary>
         public pxr.SdfPath usdRootPath = pxr.SdfPath.AbsoluteRootPath();
@@ -107,6 +112,7 @@ namespace Unity.Formats.USD
         public bool importSceneInstances = true;
         public bool importPointInstances = true;
         public bool importMonoBehaviours = false;
+        public bool overwriteMats = false;
 
         /// <summary>
         /// Typically USD data is right-handed and Unity is left handed; this option indicates how

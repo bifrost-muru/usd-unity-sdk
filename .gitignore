@@ -107,3 +107,13 @@ package/com.unity.formats.usd/Tests/Editor/Data/006-PBR-Support/BumpedCubes/Norm
 package/com.unity.formats.usd/Tests/Editor/Data/006-PBR-Support/DamagedHelmet/DamagedHelmet_HDRP.mat
 package/com.unity.formats.usd/Tests/Editor/Data/006-PBR-Support/MultiMaterial/MultiMaterial-M01-HDRP.mat
 package/com.unity.formats.usd/Tests/Editor/UsdComplianceTests.cs.meta
+package/com.unity.formats.usd/Tests/Editor/Data/006-PBR-Support/MultiMaterial/MultiMaterial-M01-HDRP.mat
+package/com.unity.formats.usd/Tests/Editor/Data/006-PBR-Support/DamagedHelmet/DamagedHelmet_HDRP.mat
+package/com.unity.formats.usd/Tests/Editor/Data/006-PBR-Support/BumpedCubes/NormalMappedCube.mat
+package/com.unity.formats.usd/Tests/Editor/Data/006-PBR-Support/BumpedCubes/BumpMappedCube.mat
+package/com.unity.formats.usd/Tests/Editor/Data/006-PBR-Support/AOPlanes/HDRP/Plane-WhiteAO.mat
+package/com.unity.formats.usd/Tests/Editor/Data/006-PBR-Support/AOPlanes/HDRP/Plane-sRGB-GradientAO.mat
+package/com.unity.formats.usd/Tests/Editor/Data/006-PBR-Support/AOPlanes/HDRP/Plane-NoAO.mat
+package/com.unity.formats.usd/Tests/Editor/Data/006-PBR-Support/AOPlanes/HDRP/Plane-Linear-GradientAO.mat
+package/com.unity.formats.usd/Tests/Editor/Data/006-PBR-Support/AOPlanes/HDRP/Plane-BlackAO.mat
+package/com.unity.formats.usd/Tests/Editor/Data/006-PBR-Support/AOPlanes/HDRP/Plane-50pctAO.mat

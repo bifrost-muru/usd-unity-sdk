@@ -45,9 +45,7 @@ namespace Unity.Formats.USD
         private int m_screenWidth = 1920;
         private int m_screenHeight = 1080;
 
-        private string m_MaterialStorePath = "BifrostMaterialOverrides";
         public Shader m_MaterialBaseShader;
-        private bool m_OverwriteExistingMaterials = false;
 
         private enum LinearUnits
         {
@@ -336,48 +334,20 @@ namespace Unity.Formats.USD
             usdAsset.m_importMeshes = EditorGUILayout.Toggle("Import Meshes", usdAsset.m_importMeshes);
             usdAsset.m_importSkinning = EditorGUILayout.Toggle("Import Skinning", usdAsset.m_importSkinning);
             usdAsset.m_importTransforms = EditorGUILayout.Toggle("Import Transforms", usdAsset.m_importTransforms);
+            usdAsset.m_overwriteMats = EditorGUILayout.Toggle("Overwrite Materials", usdAsset.m_overwriteMats);
 
-            GUILayout.Label("Remove Tools", EditorStyles.boldLabel);
+            // #MTODO : Change this to load materials from folder
+            //if (GUILayout.Button("Save Materials"))
+            //{
+            //    string rootFolderPath = "Assets/" + m_MaterialStorePath;
+            //    if (!Directory.Exists(rootFolderPath))
+            //    {
+            //        Directory.CreateDirectory(rootFolderPath);
+            //    }
 
-            if (GUILayout.Button("Remove Proxy"))
-            {
-                IterateChildrenAndDeleteMatchingNames(usdAsset.transform, "proxy");
-            }
-
-            if (GUILayout.Button("Remove Prototypes"))
-            {
-                IterateChildrenAndDeleteMatchingNames(usdAsset.transform, "Prototypes");
-            }
-
-            GUILayout.Label("Material tools", EditorStyles.boldLabel);
-
-            if (GUILayout.Button("Load UVs"))
-            {
-                LoadUVsOnAllChildren(usdAsset.transform, usdAsset.GetScene());
-            }
-
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PrefixLabel("Material Save Path");
-            m_MaterialStorePath = GUILayout.TextField(m_MaterialStorePath, 250, "textfield");
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PrefixLabel("Overwrite existing materials");
-            m_OverwriteExistingMaterials = EditorGUILayout.Toggle("", m_OverwriteExistingMaterials);
-
-            EditorGUILayout.EndHorizontal();
-
-            if (GUILayout.Button("Save Materials"))
-            {
-                string rootFolderPath = "Assets/" + m_MaterialStorePath;
-                if (!Directory.Exists(rootFolderPath))
-                {
-                    Directory.CreateDirectory(rootFolderPath);
-                }
-
-                CreateHierarchyAndMaterials(usdAsset.transform, rootFolderPath);
-                AssetDatabase.Refresh();
-            }
+            //    CreateHierarchyAndMaterials(usdAsset.transform, rootFolderPath);
+            //    AssetDatabase.Refresh();
+            //}
 
             GUILayout.Label("Screenshot Tools", EditorStyles.boldLabel);
 
@@ -427,53 +397,53 @@ namespace Unity.Formats.USD
         }
         private void CreateHierarchyAndMaterials(Transform parent, string parentFolderPath)
         {
-            foreach (Transform child in parent)
-            {
-                string childFolderPath = parentFolderPath + "/" + child.name;
-                Directory.CreateDirectory(childFolderPath);
+            //foreach (Transform child in parent)
+            //{
+            //    string childFolderPath = parentFolderPath + "/" + child.name;
+            //    Directory.CreateDirectory(childFolderPath);
 
-                MeshFilter meshFilter = child.GetComponent<MeshFilter>();
-                if (meshFilter != null)
-                {
-                    MeshRenderer meshRenderer = child.GetComponent<MeshRenderer>();
+            //    MeshFilter meshFilter = child.GetComponent<MeshFilter>();
+            //    if (meshFilter != null)
+            //    {
+            //        MeshRenderer meshRenderer = child.GetComponent<MeshRenderer>();
 
-                    if (meshRenderer != null)
-                    {
-                        Material[] materials = meshRenderer.sharedMaterials;
+            //        if (meshRenderer != null)
+            //        {
+            //            Material[] materials = meshRenderer.sharedMaterials;
 
-                        foreach (Material material in materials)
-                        {
-                            string materialName = material.name + ".mat";
-                            string fullMaterialPath = childFolderPath + "/" + materialName;
+            //            foreach (Material material in materials)
+            //            {
+            //                string materialName = material.name + ".mat";
+            //                string fullMaterialPath = childFolderPath + "/" + materialName;
 
-                            string materialPath = AssetDatabase.GetAssetPath(material);
-                            if(!string.IsNullOrEmpty(materialPath))
-                            {
-                                Debug.Log($"Material already saved at {materialPath}");
-                                continue;
-                            }
+            //                string materialPath = AssetDatabase.GetAssetPath(material);
+            //                if(!string.IsNullOrEmpty(materialPath))
+            //                {
+            //                    Debug.Log($"Material already saved at {materialPath}");
+            //                    continue;
+            //                }
 
-                            if (AssetDatabase.LoadAssetAtPath<Material>(fullMaterialPath) != null)
-                            {
-                                if(m_OverwriteExistingMaterials)
-                                {
-                                    AssetDatabase.DeleteAsset(fullMaterialPath);
-                                }
-                                else
-                                {
-                                    Debug.Log($"Material exists at {fullMaterialPath} and override material is set to false.");
-                                    continue;
-                                }
-                            }
+            //                if (AssetDatabase.LoadAssetAtPath<Material>(fullMaterialPath) != null)
+            //                {
+            //                    if(m_OverwriteExistingMaterials)
+            //                    {
+            //                        AssetDatabase.DeleteAsset(fullMaterialPath);
+            //                    }
+            //                    else
+            //                    {
+            //                        Debug.Log($"Material exists at {fullMaterialPath} and override material is set to false.");
+            //                        continue;
+            //                    }
+            //                }
 
 
-                            AssetDatabase.CreateAsset(material, fullMaterialPath);
-                        }
-                    }
-                }
+            //                AssetDatabase.CreateAsset(material, fullMaterialPath);
+            //            }
+            //        }
+            //    }
 
-                CreateHierarchyAndMaterials(child, childFolderPath);
-            }
+            //    CreateHierarchyAndMaterials(child, childFolderPath);
+            //}
         }
 
         static bool IsPathValid(string path)

@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Generic;
 using System.IO;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using USD.NET;
 using USD.NET.Unity;
@@ -70,7 +72,8 @@ namespace Unity.Formats.USD
             foreach (pxr.UsdShadeMaterial usdMat in matVector)
             {
                 matIndex++;
-                Material unityMat = importOptions.materialMap[usdMat.GetPath()];
+                string path = usdMat.GetPath();
+                Material unityMat = importOptions.materialMap[path];
 
                 if (unityMat == null)
                 {
@@ -212,8 +215,41 @@ namespace Unity.Formats.USD
                 return null;
             }
 
+            /*  https://github.com/Unity-Technologies/usd-unity-sdk/issues/147
+             *  [System.Serializable]
+                public class SurfaceParams : SampleBase
+                {
+                    // You can either use a namespace or nested "Sample" objects.
+                    // Using nested objects probably better matches the data, but here
+                    // I'm just using the UsdNamespace attribute because it's simpler.
+                    [UsdNamespace("material:parameters")]
+                    [CustomData]
+                    public int Bake_Bake_DiffuseColor;
+                }
+            */
+            // Debug.Log(pxr.UsdCs.VtValueToint(prim.GetCustomDataByKey(new pxr.TfToken("material:parameters:Bake_Bake_DiffuseColor"))));
+            // var dataDict = prim.GetCustomData();
+            // Debug.Log(pxr.UsdCs.VtValueToint(dataDict.GetValueAtPath("material:parameters:Bake_Bake_DiffuseColor")));
+            /*
+             * scene.Read<SurfaceParams>("/root/materials/pxrSurface/basicSurface_mat", sample);
+             * scene.Close();
+             * Debug.Log(sample.Bake_Bake_DiffuseColor);
+             */
+
+#if false
+            {
+                pxr.SdfPath surfacePath = new pxr.SdfPath(sample.surface.connectedPath).GetPrimPath();
+                pxr.UsdPrim prim = scene.GetPrimAtPath(surfacePath);
+                pxr.TfToken sdfAttrName = new pxr.TfToken(IntrinsicTypeConverter.JoinNamespace("inputs", "metalness"));
+                pxr.UsdAttribute usdAttribute = prim.GetAttribute(sdfAttrName);
+                string oglmetallic = pxr.UsdCs.VtValueTostring(usdAttribute.GetCustomDataByKey(new pxr.TfToken("HoudiniPreviewTags:ogl_metallic")));
+                Debug.Log($"Metalness : {oglmetallic}");
+            }
+#endif
+
             MtlxSurfaceSample mtlxSurf = new MtlxSurfaceSample();
-            scene.Read(new pxr.SdfPath(sample.surface.connectedPath).GetPrimPath(), mtlxSurf);
+            pxr.SdfPath matPath = new pxr.SdfPath(sample.surface.connectedPath).GetPrimPath();
+            scene.Read(matPath, mtlxSurf);
 
             if (!string.IsNullOrEmpty(mtlxSurf.base_color.connectedPath))
             {

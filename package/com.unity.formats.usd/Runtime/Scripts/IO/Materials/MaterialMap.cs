@@ -35,7 +35,7 @@ namespace Unity.Formats.USD
         /// <summary>
         /// A mapping from USD shader ID to Unity material.
         /// </summary>
-        private Dictionary<string, Material> m_map = new Dictionary<string, Material>();
+        public Dictionary<string, Material> m_map = new Dictionary<string, Material>();
 
         private Dictionary<Color, Material> m_colorMap = new Dictionary<Color, Material>();
 
@@ -44,7 +44,7 @@ namespace Unity.Formats.USD
         /// </summary>
         private Dictionary<string, MaterialBinder> m_requestedBindings = new Dictionary<string, MaterialBinder>();
 
-        private Dictionary<string, List<string>> m_primvars = new Dictionary<string, List<string>>();
+        public Dictionary<string, List<string>> m_primvars = new Dictionary<string, List<string>>();
 
         /// <summary>
         /// Looks for additional metadata describing the original shader name, rather than using

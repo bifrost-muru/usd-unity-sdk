@@ -48,7 +48,7 @@ namespace USD.NET.Unity
         [InputParameter("_SpecularRoughness")]
         public Connectable<Vector3> specular_roughness = new Connectable<Vector3>(new Vector3(0.18f, 0.18f, 0.18f));
 
-        [UsdSchema("hmtlxcolorcorrect1")]
+        [UsdSchema("in")]
         public class ExtractInTexture : SampleBase
         {
             [InputParameter("_In")]
@@ -76,13 +76,32 @@ namespace USD.NET.Unity
          */
         public ExtractInTexture normals_in = new ExtractInTexture();
 
+        [UsdSchema("metalness")]
+        public class ExtractMetalness : SampleBase
+        {
+            public class HoudiniPreviewTagsExtractor : SampleBase
+            {
+                public double default_value = 0;
+                public string ogl_metallic = "0";
+            }
+
+            [UsdNamespace("HoudiniPreviewTags")]
+            [CustomData]
+            public double default_value = 0;
+
+            [UsdNamespace("HoudiniPreviewTags")]
+            [CustomData] 
+            public string ogl_metallic = "0";
+        }
+
         /* 
          * mtlx:surface.connect -> mtlxstandard_surface1.outputs
          * mtlxstandard_surface1.outputs -> metalness 
          * customData -> HoudiniPreviewTags (dictionary)
          * HoudiniPreviewTags (dictionary) -> ogl_metallic
          */
+
         [InputParameter("_Metalness")]
-        public Connectable<Vector3> metalness = new Connectable<Vector3>(new Vector3(0.18f, 0.18f, 0.18f));
+        public ExtractMetalness metalness = new ExtractMetalness();
     }
 }
