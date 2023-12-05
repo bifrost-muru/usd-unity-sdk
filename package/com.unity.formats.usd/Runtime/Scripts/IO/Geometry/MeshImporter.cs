@@ -612,6 +612,19 @@ namespace Unity.Formats.USD
                             path,
                             (scene, boundMat, primvars) => BindMat(
                                 unityMesh, boundMat, renderer, path, primvars, usdMesh));
+
+                    if(geomSubsets.Subsets.Count != 0)
+                    {
+                        var subIndex = 0;
+                        foreach (var kvp in geomSubsets.Subsets)
+                        {
+                            var idx = subIndex++;
+                            options.materialMap.RequestBinding(
+                                kvp.Key,
+                                (scene, boundMat, primvars) => BindMat(
+                                    unityMesh, boundMat, renderer, idx, path, primvars, usdMesh));
+                        }
+                    }
                 }
                 else
                 {
